@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Nowhat</title>
+
+    <!-- Sets initial viewport load and disables zooming  -->
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
+
+    <!-- Makes your prototype chrome-less once bookmarked to your phone's home screen -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+    <!-- Set Apple icons for when prototype is saved to home screen -->
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="touch-icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="touch-icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="touch-icons/apple-touch-icon-57x57.png">
+
+    <!-- Include the compiled Ratchet CSS -->
+    <link rel="stylesheet" href="ratchet.css">
+
+    <!-- Include the compiled Ratchet JS -->
+    <script src="ratchet.js"></script>
+
+    <!-- Intro paragraph styles. Delete once you start using this page -->
+    <style type="text/css">
+        .welcome {
+          line-height: 1.5;
+          color: #555;
+        }
+
+        .pushButton {
+          background-color:#E1E2E3;
+          -moz-box-shadow: 0 0 5px #888;
+          -webkit-box-shadow: 0 0 5px#888;
+          box-shadow: 0 0 5px #888;
+          color:#888;
+          font-weight: bold;
+        }
+
+        .searchInputBlock {
+          background-image:url('img/debut_dark.png');
+        }
+
+        .list img{
+            width:90px;
+            text-align: center;
+            vertical-align:middle;
+        }
+
+        .venue_distance {
+            text-align: right;
+        }
+    </style>
+
+  </head>
+  <body>
+
+  <!-- Make sure all your bars are the first things in your <body> -->
+  <header class="bar-title">
+  <a href="#myPopover">
+    <h1 class="title">Notification</h1>
+  </a>
+</header>
+
+  <!-- Wrap all non-bar HTML in the .content div (this is actually what scrolls) -->
+   
+   
+   <div class="content">
+   <div id="myPopover" class="popover">
+  <header class="popover-header">
+    
+    <h3 class="title">Welcome to Lao Szechuan</h3>
+    
+  </header>
+  <ul class="list">
+    <li><center><img src="img/badge.png" style="width:90px"/></center></li>
+    <li>Try our special lunch today!</li>
+    <li>Get free dessert next time!</li>
+    
+  </ul>
+</div>
+ </div> 
+ 
+
+
+  <nav class="bar-tab">
+  <ul class="tab-inner">
+    <li class="tab-item">
+      <a href="search.html" data-transition="fade">
+        <img class="tab-icon" src="img/explore.png">
+        <div class="tab-label">Expore</div>
+      </a>
+    </li>
+    <li class="tab-item">
+      <a href="awards.html" data-transition="fade">
+        <img class="tab-icon" src="img/check.png">
+        <div class="tab-label">Visited</div>
+      </a>
+    </li>
+    
+     <li class="tab-item active">
+      <a href="alert.html" data-transition="fade">
+        <img class="tab-icon" src="img/notifications.png">
+        <div class="tab-label">Notifications</div>
+      </a>
+    </li>
+    
+  </ul>
+</nav>
+
+
+  </body>
+</html>

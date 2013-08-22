@@ -1,0 +1,167 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.5/leaflet.css" />
+    <!--[if lte IE 8]>
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.5/leaflet.ie.css" />
+    <![endif]-->
+
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="http://d3js.org/d3.hexbin.v0.js"></script>
+    <script src="http://cdn.leafletjs.com/leaflet-0.5/leaflet-src.js"></script>
+ <script src="querystring.js"></script>
+    <script src="colorbrewer.js"></script>
+    <script src="hexbin_layer.js"></script>
+     <script src="http://www.parsecdn.com/js/parse-1.2.2.min.js"></script>
+      <script src="http://maps.google.com/maps/api/js?v=3.2&sensor=false"></script>
+    <script src="http://matchingnotes.com/javascripts/leaflet-google.js"></script>
+    <style type="text/css">
+      html, body { margin: 0; padding: 0; height: 100%; }
+      #graffiti { min-height: 100%; }
+      .hexagon { opacity: 0.7 }
+      #map { height: 500px;}
+    </style>
+  </head>
+  <body>
+    <div id='graffiti'></div>
+  
+    <script type="text/javascript">
+      (function () {
+          var max, scale,
+              classes = 9,
+              scheme = colorbrewer["YlOrRd"][classes],
+              container = L.DomUtil.get('graffiti'),
+              map = L.map(container).setView([41.24, -73.05], 15);
+
+
+          var color = d3.scale.linear()
+    .domain([0, 20])
+    .range(["white", "red"])
+    .interpolate(d3.interpolateLab);
+     //var map = new L.Map('map', {center: new L.LatLng(41.24, -73.05), zoom: 9});
+     //var googleLayer = new L.Google('ROADMAP');
+     // map.addLayer(googleLayer);
+
+          L.tileLayer('http://{s}.tile.stamen.com/watercolor/{z}/{x}/{y}.png', {
+              attribution: '<a id="home-link" target="_top" href="../">Map tiles</a> by <a target="_top" href="http://stamen.com">Stamen Design</a>, under <a target="_top" href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a target="_top" href="http://openstreetmap.org">OpenStreetMap</a>, under <a target="_top" href="http://creativecommons.org/licenses/by-sa/3.0">CC BY SA</a>',
+          }).addTo(map);
+
+         // Async call for data. Source URL is loaded from container element's
+          //'data-source' attribute.
+
+          Parse.initialize("79GRHruvLySdOumjDCHWJNVXPj89tU47mz6QMnVp", "a1ZOFMxtn2WoiPHSlfsX8kBXldNFppJU0lgFXauZ");
+  var MoloLog = Parse.Object.extend("LocationLog");
+
+
+getLogFromParse(0);
+  function getLogFromParse(skip, resultsTobeAppended){
+  if(resultsTobeAppended==null)
+    resultsTobeAppended=[];
+     var query = new Parse.Query(MoloLog);
+      query.notEqualTo("version", "1.0.2");
+      query.equalTo("deviceID",QueryString.id);
+     // query.equalTo("points.status","significan location change");
+     //query.equalTo("deviceID","CF05E596-FBE5-43EB-B88E-0B04E44D8455");
+       //query.equalTo("deviceID","770C1C8D-4610-46E3-9447-D80D9F6D2AD2");
+      query.skip(skip)
+      query.limit(1000);
+      query.find({
+        success: function(results) {
+
+        console.log(" retrieved " + results.length + " logs.");
+        
+          if(results.length==1000){
+            if(skip<=9000){
+            skip = skip + 1000
+
+            console.log(" skipped: " +skip);
+            getLogFromParse(skip,results.concat(resultsTobeAppended));
+        }else{//new temp handle
+          console.log("concat retrieved " + results.concat(resultsTobeAppended).length + " logs.");           
+                  getALLPoints(results.concat(resultsTobeAppended));
+        }
+          }else{  
+              console.log("concat retrieved " + results.concat(resultsTobeAppended).length + " logs.");           
+                  getALLPoints(results.concat(resultsTobeAppended));
+                 }
+
+
+
+        },
+
+        error: function(error) {
+          alert("Error: " + error.code + " " + error.message);
+        }
+});
+}
+
+function getALLPoints(results)
+{
+
+  var feature = [];
+  console.log("Successfully retrieved " + results.length + " logs.");
+                 
+            for(var point in results){  
+              
+              userPoint = (JSON.parse(JSON.stringify(results[point])).points);
+              
+              if(userPoint!=undefined&&userPoint.appVersion!="1.0.4"&&userPoint.appVersion!="1.0.5"&&userPoint.currentAccuracy<=500&&userPoint.checkinLat!=0){ 
+              
+              if(userPoint.status=="significan location change"){
+                newpoint = {
+                  type:"Feature",
+                  prooerties:{COUNT:1},
+                  geometry:{
+                    type:"Point",
+                    coordinates:[ userPoint.checkinLong, userPoint.checkinLat]
+                  }
+                }
+
+                feature.push(newpoint);
+                }
+                // if(userPoint.status =="checkedInPolygon"){
+                //   checkinData.push(userPoint);
+                // }
+              }//if
+              }//for  
+
+              collections = {type:"FeatureCollection", features:feature};
+              // When data arrives, create leaflet layer with custom style callback.
+              L.hexLayer(collections, {
+                  applyStyle: hex_style
+              }).addTo(map);
+           
+
+  }       
+             
+         
+
+          /**
+           * Hexbin style callback.
+           *
+           * Determines a quantize scale (http://bl.ocks.org/4060606) based on the
+           * map's initial data density (which is based on the initial zoom level)
+           * and applies a colorbrewer (http://colorbrewer2.org/) colour scheme
+           * accordingly.
+           */
+          function hex_style(hexagons) {
+              // Maintain a density scale relative to initial zoom level.
+              if (!(max && scale)) {
+                  max = d3.max(hexagons.data(), function (d) { return d.length; });
+                  scale = d3.scale.quantize()
+                          .domain([0, max])
+                          .range(d3.range(classes));
+              }
+
+              hexagons
+                  .attr("stroke", scheme[classes - 1])
+                  .attr("fill", function (d) {
+                      //return scheme[scale(d.length)];
+                      return color(d.length); 
+                  });
+          }
+      }());
+    </script>
+  </body>
+</html>

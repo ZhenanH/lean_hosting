@@ -1,0 +1,55 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Leaflet Quick Start Guide Example</title>
+  <meta charset="utf-8" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+  <link rel="stylesheet" href="http://leafletjs.com/dist/leaflet.css" />
+  <!--[if lte IE 8]><link rel="stylesheet" href="../dist/leaflet.ie.css" /><![endif]-->
+</head>
+<body>
+  <div id="map" style="position: absolute;top: 0;bottom: 0;width: 100%"></div>
+
+  <script src="http://leafletjs.com//dist/leaflet.js"></script>
+  <script>
+
+    var center = [41.245987, -73.025944];
+    var map = L.map('map').setView(center, 13);
+
+    L.tileLayer('http://{s}.tile.cloudmade.com/BC9A493B41014CAABB98F0471D759707/997/256/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://cloudmade.com">CloudMade</a>'
+    }).addTo(map);
+
+
+   map.on('contextmenu',function(e){
+      drawPolygon(e.latlng.lat,e.latlng.lng);
+    });
+
+   
+
+  function drawPolygon(lat,lng)
+{
+   $.getJSON("http://solocusp.com/API/rest/businessparcel/getNearbyBusinessNative?token=molo&&lat="+lat+"&lon="+lng+"&limit=1",function(d){
+
+    
+    pointStringArray = d.data[0].parcelPolygonPoints;
+    console.log(d.data[0].name);
+    points = [];
+    for(p in pointStringArray){
+        point = [];
+        point.push(parseFloat(pointStringArray[p].y));
+        point.push(parseFloat(pointStringArray[p].x));
+      points.push(point);
+    }   
+        //alert(JSON.stringify(points));
+    var polygon = L.polygon(points).addTo(map);
+   });
+}
+
+  </script>
+</body>
+</html>

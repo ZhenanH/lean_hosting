@@ -1,0 +1,348 @@
+
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="target-densitydpi=device-dpi, width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="description" content="Metro UI CSS">
+    <meta name="author" content="Sergey Pimenov">
+    <meta name="keywords" content="windows 8, modern style, Metro UI, style, modern, css, framework">
+    <link href="metro/css/modern.css" rel="stylesheet">
+    <link href="metro/css/modern-responsive.css" rel="stylesheet">
+    <script src="jquery-1.9.1.min.js"></script>
+    <script src="http://www.parsecdn.com/js/parse-1.2.2.min.js"></script>
+    <script src="querystring.js"></script>
+   <script type="text/javascript"
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCZfHRnq7tigC-COeQRmoa9Cxr0vbrK6xw&sensor=false&libraries=visualization">
+    </script>
+
+  
+
+     <style>
+
+  body { margin:20px;} 
+  i { cursor: pointer;}  
+  #title { font-size: 27px; color:gray;}
+
+  #mainarea { width:900px; margin-right: auto; margin-left: auto; overflow: hidden;}
+
+  #mainmenu { width:500px; margin-right: auto; margin-left: auto; position: relative; margin-top: 50px;}
+  #mainmenu ul li { font-size: 25px; color:gray; list-style-type: none; cursor: pointer; margin:10px;}
+
+  #activity_page {width:800px; margin-right: auto; margin-left: auto;}
+  #map-canvas { height: 500px;}
+
+  #memebership_page { width:800px; margin-right: auto; margin-left: auto;}
+  #memebership_page ul li { font-size: 23px; color:gray; list-style-type: none; cursor: pointer; margin:10px;}
+
+  </style>
+  <script>
+  Parse.initialize("79GRHruvLySdOumjDCHWJNVXPj89tU47mz6QMnVp", "a1ZOFMxtn2WoiPHSlfsX8kBXldNFppJU0lgFXauZ");
+  var MoloLog = Parse.Object.extend("LocationLog");
+
+  function getLogFromParse(skip, resultsTobeAppended){
+  if(resultsTobeAppended==null)
+    resultsTobeAppended=[];
+     var query = new Parse.Query(MoloLog);
+      query.notEqualTo("version", "1.0.2");
+      query.equalTo("deviceID",QueryString.id);
+     // query.equalTo("points.status","significan location change");
+      query.skip(skip)
+      query.limit(1000);
+      query.find({
+        success: function(results) {
+
+        console.log(" retrieved " + results.length + " logs.");
+        
+          if(results.length==1000){
+            if(skip<=9000){
+            skip = skip + 1000
+
+            console.log(" skipped: " +skip);
+            getLogFromParse(skip,results.concat(resultsTobeAppended));
+        }else{//new temp handle
+          console.log("concat retrieved " + results.concat(resultsTobeAppended).length + " logs.");           
+                  getALLPoints(results.concat(resultsTobeAppended));
+        }
+          }else{  
+              console.log("concat retrieved " + results.concat(resultsTobeAppended).length + " logs.");           
+                  getALLPoints(results.concat(resultsTobeAppended));
+                 }
+
+
+
+        },
+
+        error: function(error) {
+          alert("Error: " + error.code + " " + error.message);
+        }
+});
+}
+
+function getALLPoints(results)
+{
+
+  console.log("Successfully retrieved " + results.length + " logs.");
+                 
+            for(var point in results){  
+              
+              userPoint = (JSON.parse(JSON.stringify(results[point])).points);
+              
+              if(userPoint!=undefined&&userPoint.appVersion!="1.0.4"&&userPoint.appVersion!="1.0.5"&&userPoint.currentAccuracy<=500&&userPoint.checkinLat!=0){ 
+              
+              if(userPoint.status=="significan location change"){
+                newpoint =  new google.maps.LatLng(userPoint.checkinLat, userPoint.checkinLong);
+                taxiData.push(newpoint);
+                }
+                if(userPoint.status =="checkedInPolygon"){
+                  checkinData.push(userPoint);
+                }
+              }//if
+              }//for  
+
+              addHeatmap();
+              buildCheckinList();
+            //initializeMap();
+           
+}
+
+function buildCheckinList(){
+  var membershipList = {};
+  for(checkin in checkinData){
+    if(membershipList[checkinData[checkin]["geofenceName"]]==undefined){
+      membershipList[checkinData[checkin]["geofenceName"]]=1;
+      //alert("yes: "+JSON.stringify(membershipList));
+    }
+    else{
+      membershipList[checkinData[checkin]["geofenceName"]]+=1;
+      //alert("no: "+JSON.stringify(membershipList));
+    }
+    //$("#checkin_list").append("<li>"+JSON.stringify(checkinData[checkin])+"</li>");
+  }
+
+    var sortedMembershipList = sortObject(membershipList);
+
+    for(store in sortedMembershipList)
+    {
+      $("#checkin_list").append("<li>"+sortedMembershipList[store].value+" "+getReadableName(sortedMembershipList[store].key)+"</li>");
+    }
+ 
+}
+
+function getReadableName(str){
+  return str.substring(0,str.indexOf("bid"));
+}
+
+function sortObject(obj) {
+    var arr = [];
+    for (var prop in obj) {
+        if (obj.hasOwnProperty(prop)) {
+            arr.push({
+                'key': prop,
+                'value': obj[prop]
+            });
+        }
+    }
+    arr.sort(function(a, b) { return b.value - a.value; });
+    //arr.sort(function(a, b) { a.value.toLowerCase().localeCompare(b.value.toLowerCase()); }); //use this to sort as strings
+    return arr; // returns array
+}
+
+  function slideLeft(str){
+
+    $("#mainmenu").animate({
+    //opacity: 0.25,
+    left: '-=800'
+  }, 400, function() {
+    // Animation complete.
+      //$(this).fadeOut();
+
+      $("#"+str).animate({
+    
+    left: '-=1500'
+  }, 400, function() {
+    // Animation complete.
+    google.maps.event.trigger(map, "resize"); 
+  });
+
+  });
+  }
+
+
+  function slideRight(str){
+
+    $("#"+str).animate({
+    //opacity: 0.25,
+    left: '+=1500'
+  }, 400, function() {
+    // Animation complete.
+     
+      //$("#mainmenu").css('left','500px').fadeIn();
+      $("#mainmenu").animate({
+    
+    left: '+=800'
+  }, 400, function() {
+    // Animation complete.
+  });
+
+  });
+  }
+
+ 
+var map, pointarray, heatmap;
+
+var taxiData = [
+  
+];
+
+var checkinData = [];
+
+//getLogFromParse(0);
+function initialize() {
+
+var styles = [
+  {
+    stylers: [
+      { hue: "#00ffe6" },
+      { saturation: -20 }
+    ]
+  },{
+    featureType: "road",
+    elementType: "geometry",
+    stylers: [
+      { lightness: 100 },
+      { visibility: "simplified" }
+    ]
+  },{
+    featureType: "road",
+    elementType: "labels",
+    stylers: [
+      { visibility: "off" }
+    ]
+  }
+];
+
+  var mapOptions = {
+    zoom: 9,
+    center: new google.maps.LatLng(41.24, -73.05),
+    mapTypeId: google.maps.MapTypeId.SATELLITE
+  };
+
+  map = new google.maps.Map(document.getElementById('map-canvas'),
+      mapOptions);
+
+  map.setOptions({styles: styles});
+
+ 
+}
+
+function addHeatmap(){
+  var pointArray = new google.maps.MVCArray(taxiData);
+
+  heatmap = new google.maps.visualization.HeatmapLayer({
+    data: pointArray,
+    dissipating:true
+  });
+
+  heatmap.setMap(map);
+  $(".loadingIndicator").fadeOut();
+}
+
+function toggleHeatmap() {
+  heatmap.setMap(heatmap.getMap() ? null : map);
+}
+
+function changeGradient() {
+  var gradient = [
+    'rgba(0, 255, 255, 0)',
+    'rgba(0, 255, 255, 1)',
+    'rgba(0, 191, 255, 1)',
+    'rgba(0, 127, 255, 1)',
+    'rgba(0, 63, 255, 1)',
+    'rgba(0, 0, 255, 1)',
+    'rgba(0, 0, 223, 1)',
+    'rgba(0, 0, 191, 1)',
+    'rgba(0, 0, 159, 1)',
+    'rgba(0, 0, 127, 1)',
+    'rgba(63, 0, 91, 1)',
+    'rgba(127, 0, 63, 1)',
+    'rgba(191, 0, 31, 1)',
+    'rgba(255, 0, 0, 1)'
+  ]
+  heatmap.setOptions({
+    gradient: heatmap.get('gradient') ? null : gradient
+  });
+}
+
+function changeRadius() {
+  heatmap.setOptions({radius: heatmap.get('radius') ? null : 50});
+}
+
+function changeOpacity() {
+  heatmap.setOptions({opacity: heatmap.get('opacity') ? null : 1});
+}
+
+google.maps.event.addDomListener(window, 'load', initialize);
+getLogFromParse(0);
+
+  </script>
+
+  
+</head>
+<body class="metrouicss" >
+
+
+<center>  <div id = "title">Molo Console</div> </center>
+
+<div id="mainarea">
+
+<div id="mainmenu">
+
+
+
+  
+  
+</div> 
+<div id="activity_page">
+  <i class="icon-info-2" style="font-size:30px; color:gray; position:relative; left:-50px;" onclick="slideRight('activity_page')"></i>
+  <font class="loadingIndicator">loading <img  src='metro/images/preloader-w8-line-black.gif' style="padding:10px;height:32px"/></font>
+  <div id="map-canvas"/>
+</div>
+<div id="memebership_page">
+  <i class="icon-info-2" style="font-size:30px; color:gray; position:relative; left:-50px;" onclick="slideRight('memebership_page')"></i>
+  <ul id="checkin_list">
+  </ul>
+</div> 
+
+
+
+
+
+</div>
+
+
+
+                   
+
+    
+
+    
+   
+    
+
+   
+
+    </body>
+</html>
+  
+
+
+
+
+
+ 
+
+
+
+
